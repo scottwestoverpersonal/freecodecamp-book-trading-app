@@ -1,2 +1,2 @@
-# freecodecamp-book-trading-app
+# freecodecamp-book-trading-app (Work in progress)
 This is a node.js app that allows users to manager their books, view other user's books, and to request trades with the other users. The app uses....
