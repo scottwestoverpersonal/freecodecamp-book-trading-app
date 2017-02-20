@@ -1,4 +1,4 @@
-# freecodecamp-book-trading-app (Work in progress)
+# freecodecamp-book-trading-app
 This is a node.js app that allows users to manager their books, view other user's books, and to request trades with the other users. The app uses stormpath for user management, and mongodb for the database.
 
 You can view the live demo here: https://stark-basin-36303.herokuapp.com/
