@@ -11,18 +11,40 @@
 
   <!-- Begin Container -->
 <div class="container">
-  <div class="row center">
-    <p>No Plans Tonight?</p>
-    <p>Find a bar near you and reserve ahead of time! <br>This app was built using the Yelp API.</p> 
-  </div>
-  <div class="row">
-        <div class="input-group">
-      <input type="text" class="form-control" placeholder="Search for..." id="seachInput">
-      <span class="input-group-btn">
-      </span>
-    </div><!-- /input-group -->
-  </div>
-</div>
+    <div class="grid" style="position: relative; height: 184px;">
+      <div class="grid-sizer"></div>
+    </div>
+ </div>
   <!-- /.container -->
+
+  <script>
+  $.ajax({
+    type: 'GET',
+    url: '/getBooks',
+    success: function(data) {
+        console.log(data);
+        for(var i = 0; i < data.books.length; i++){
+                var htmlCards = '<div class="grid-item"><div class="card">';
+                htmlCards += '<div class="img-wrapper"><img src="'+data.books[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
+                htmlCards += '</div></div>';
+                $('.grid').append(htmlCards);
+        }
+        setTimeout(function(){ 
+                  $('.grid').masonry({
+              // set itemSelector so .grid-sizer is not used in layout
+              itemSelector: '.grid-item',
+              // use element for option
+              columnWidth: '.grid-sizer',
+              percentPosition: true
+            });
+        }, 200);
+    }
+  });
+  function imgError(image) {
+        image.onerror = "";
+        image.src = "http://www.avsforum.com/photopost/data/2277869/9/9f/9f50538d_test.jpeg";
+        return true;
+    }
+  </script>
 </body>
 </html>

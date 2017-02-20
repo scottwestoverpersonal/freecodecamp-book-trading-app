@@ -83,73 +83,83 @@ app.get('/yelp', stormpath.getUser, function(request, response) {
   });
 });
 
+
+
+// get all of the books in the database
+app.get('/getBooks', function(req, res){
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    findBooks(db, function(books) {
+        db.close();
+        res.json({"books":books});
+    });
+  });
+});
+
+// get all of the books in the database
+app.get('/getBook', function(req, res){
+  var bookID = req.param('bookid');
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    findBook(db, function(book) {
+        db.close();
+        res.json({"book":book});
+    }, bookID);
+  });
+});
+
+// get a single book in the database
+
 app.on('stormpath.ready', function() {
   app.listen(app.get('port'), function() {
     console.log('Node app is running on port', app.get('port'));
   });
 });
 
-// update the user record in the database with the new bar information
-var updateUsers = function(db, callback, userid, barid, going) {
-  var tempObj = {};
-  if(going == "true"){
-    tempObj[barid] = true;
-  }
-  else {
-    tempObj[barid] = false;
-  }
-   db.collection('users').updateOne(
-      { "name" : userid },
-      {
-        $set: tempObj
-      }, {upsert:true}, function(err, results) {
-      //console.log(results);
-      callback();
-   });
+// query the database to pull all of the books
+var findBooks = function(db, callback) {
+  var books = [];
+  var cursor =db.collection('Books').find( );
+  cursor.each(function(err, doc) {
+    assert.equal(err, null);
+    if (doc != null) {
+      books.push(doc);
+    } else {
+      callback(books);
+    }
+  });
 };
 
-// query the database to pull the user data
-var findUser = function(db, callback, username) {
-  var records = {};
-   var cursor =db.collection('users').find( { "name": username } );
-   cursor.each(function(err, doc) {
-      assert.equal(err, null);
-      if (doc != null) {
-         //console.log(doc);
-         records = doc;
-      } else {
-         callback(records);
-      }
-   });
+// query the database to pull a single book from the database
+var findBook = function(db, callback, bookid) {
+  var books = [];
+  var obj_id = new ObjectId(bookid);
+  var cursor = db.collection('Books').findOne({"_id":obj_id}, function(err, doc){
+    callback(doc);
+  });
 };
-
-// query the database to pull all of the bar data
-var findBars = function(db, callback) {
-  var records = {};
-   var cursor =db.collection('bars').find();
-   cursor.each(function(err, doc) {
-      assert.equal(err, null);
-      if (doc != null) {
-         //console.log(doc);
-         records[doc.name] = doc;
-      } else {
-         callback(records);
-      }
-   });
-};
-
-// update the bar recrod in the database with the number of people going
-var updateBars = function(db, callback, barid, total) {
-   db.collection('bars').updateOne(
-      { "name" : barid },
-      {
-        $set: {"total" : parseInt(total)}
-      }, {upsert:true}, function(err, results) {
-      //console.log(results);
-      callback();
-   });
-};
-
 
 //  https://stark-basin-36303.herokuapp.com/
 //  https://nodejs-fcc-scottwestover.c9users.io/
+// https://nodejs-fcc-scottwestover.c9users.io/getBook?bookid=58a11ee3f36d2837a7c70acb
+/*
+<html>
+  <head>
+    <title>Books API Example</title>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script>
+      function handleResponse(response) {
+        console.log(response);
+      for (var i = 0; i < response.items.length; i++) {
+        var item = response.items[i];
+        // in production code, item.text should have the HTML entities escaped.
+        document.getElementById("content").innerHTML += "<br>" + item.volumeInfo.title;
+      }
+    }
+    </script>
+    <script src="https://www.googleapis.com/books/v1/volumes?q=harry+potter&callback=handleResponse"></script>
+  </body>
+</html>
+*/
