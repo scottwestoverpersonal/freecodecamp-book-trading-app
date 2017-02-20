@@ -24,19 +24,19 @@
     success: function(data) {
         console.log(data);
         for(var i = 0; i < data.books.length; i++){
-                var htmlCards = '<div class="grid-item"><div class="card">';
-                htmlCards += '<div class="img-wrapper"><img src="'+data.books[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
-                htmlCards += '</div></div>';
-                $('.grid').append(htmlCards);
+          var htmlCards = '<div class="grid-item"><div class="card">';
+          htmlCards += '<div class="img-wrapper"><img src="'+data.books[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
+          htmlCards += '</div></div>';
+          $('.grid').append(htmlCards);
         }
         setTimeout(function(){ 
-                  $('.grid').masonry({
-              // set itemSelector so .grid-sizer is not used in layout
-              itemSelector: '.grid-item',
-              // use element for option
-              columnWidth: '.grid-sizer',
-              percentPosition: true
-            });
+          $('.grid').masonry({
+            // set itemSelector so .grid-sizer is not used in layout
+            itemSelector: '.grid-item',
+            // use element for option
+            columnWidth: '.grid-sizer',
+            percentPosition: true
+          });
         }, 200);
     }
   });

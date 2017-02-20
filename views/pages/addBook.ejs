@@ -10,40 +10,85 @@
   <br>
 
   <!-- Begin Container -->
-<div class="container">
+  <div class="container">
+    <h2>Add Books</h2>
+    <input type="text" placeholder="Search..." id="searchText" value="Star Wars"><button onclick="searchForBook()">Search</button>
+    <br>
+    <div id="content"></div>
     <div class="grid" style="position: relative; height: 184px;">
       <div class="grid-sizer"></div>
     </div>
- </div>
-  <!-- /.container -->
-
+  </div>
   <script>
-  $.ajax({
-    type: 'GET',
-    url: '/getBooks',
-    success: function(data) {
-        console.log(data);
-        for(var i = 0; i < data.books.length; i++){
-                var htmlCards = '<div class="grid-item"><div class="card">';
-                htmlCards += '<div class="img-wrapper"><img src="'+data.books[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
-                htmlCards += '</div></div>';
-                $('.grid').append(htmlCards);
-        }
-        setTimeout(function(){ 
-                  $('.grid').masonry({
-              // set itemSelector so .grid-sizer is not used in layout
-              itemSelector: '.grid-item',
-              // use element for option
-              columnWidth: '.grid-sizer',
-              percentPosition: true
-            });
-        }, 200);
+    var user = <%- JSON.stringify(user) %>;
+    function searchForBook(){
+      var searchTxt = $.trim($('#searchText').val());
+      if(searchTxt != ""){
+        document.getElementById("content").innerHTML = "<h2>Searching...</h2>";
+        $.get( "https://www.googleapis.com/books/v1/volumes?q='"+searchTxt+"'&startIndex=0&maxResults=10", function( data ) {
+          console.log(data);
+          handleResponse(data);
+        });
+      }else{
+        window.alert("Please enter the book you would like to search for in the search field.");
+      }
     }
-  });
-  function imgError(image) {
-        image.onerror = "";
-        image.src = "http://www.avsforum.com/photopost/data/2277869/9/9f/9f50538d_test.jpeg";
-        return true;
+    function handleResponse(response) {
+      var msnry = $('.grid').data('masonry');
+      if(msnry != undefined){
+        msnry.destroy();
+      }
+      var tempHTML = "<h2>Results:</h2>";
+      $('.grid').html('<div class="grid-sizer"></div>');
+      for (var i = 0; i < response.items.length; i++) {
+        var item = response.items[i];
+        var itemImg = "";
+        if (item.volumeInfo.hasOwnProperty('imageLinks')){
+          if(item.volumeInfo.imageLinks.hasOwnProperty('smallThumbnail')){
+            itemImg = item.volumeInfo.imageLinks.smallThumbnail;
+          }
+        }
+        // in production code, item.text should have the HTML entities escaped.
+        var htmlCards = '<div class="grid-item"><div class="card">';
+        htmlCards += '<div class="img-wrapper"><img src="'+itemImg+'" id="'+item.id+'" alt="'+item.volumeInfo.title+'" class="img-responsive img-rounded" onerror="imgError(this);" onclick="addBook(this)"></div>';
+        htmlCards += '</div></div>';
+        $('.grid').append(htmlCards);
+      }
+      document.getElementById("content").innerHTML = tempHTML;
+      setTimeout(function(){ 
+        $('.grid').masonry({
+          // set itemSelector so .grid-sizer is not used in layout
+          itemSelector: '.grid-item',
+          // use element for option
+          columnWidth: '.grid-sizer',
+          percentPosition: true
+        });
+      }, 200);
+    }
+    function imgError(image) {
+      image.onerror = "";
+      image.src = "http://www.avsforum.com/photopost/data/2277869/9/9f/9f50538d_test.jpeg";
+      return true;
+    }
+    function addBook(image) {
+      var msnry = $('.grid').data('masonry');
+      msnry.destroy();
+      var tempHTML = "<h2>Adding Book...</h2>";
+      $('.grid').html('<div class="grid-sizer"></div>');
+      document.getElementById("content").innerHTML = tempHTML;
+      $.ajax({
+	      type: 'POST',
+	      url: '/addBook',
+	      data: {
+	      	"image": image.src,
+	      	"name": image.alt,
+	      	"url": "https://www.googleapis.com/books/v1/volumes/"+image.id,
+	      	"user": user
+	      },
+	      success: function(data) {
+	      	console.log(data);
+	      }
+	    });
     }
   </script>
 </body>

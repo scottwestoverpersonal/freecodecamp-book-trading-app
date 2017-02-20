@@ -5,16 +5,16 @@ var ObjectId = require('mongodb').ObjectID;
 var stormpath = require('express-stormpath');
 var app = express();
 
-var mongoURL = '';
+var mongoURL = 'mongodb://heroku_qd2czt15:uefp27oepvc3v5ct1rtltmp63v@ds013456.mlab.com:13456/heroku_qd2czt15';
 
 app.use(stormpath.init(app, {
   website: true,
     apiKey: {
-      id: '', 
-      secret: ''
+      id: '78VXWXWDRKO8EJ0OVYA3GHUK3', 
+      secret: '5ygJqmkiVZi3QSWQuTvbQt4DxB86FlupzbqWHtr89FM'
     },
  application: {
-   href: '',
+   href: 'https://api.stormpath.com/v1/applications/1alAxdEWIbqJRw3CVEychu',
  }
 }));
 app.use(require('body-parser').urlencoded({ extended: true }));
@@ -42,6 +42,16 @@ app.get('/addBook', stormpath.getUser, function(request, response) {
 	response.render('pages/addBook', { user : request.user.email });
 });
 
+app.post('/addBook', function(request, response){
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    insertDocument(db, function() {
+        db.close();
+        response.json({"data":"Added book"});
+    }, request.body.image, request.body.name, request.body.url, request.body.user );
+  });
+});
+
 // render the settings page
 app.get('/myInfo', stormpath.loginRequired, function(request, response) {
   request.user.getCustomData(function(err, data) {
@@ -65,57 +75,14 @@ app.post('/updateInfo', stormpath.loginRequired, function(request, response) {
 
 // render the my books page
 app.get('/myBooks', stormpath.loginRequired, function(request, response) {
-	response.render('pages/myBooks', { user : request.user.email });
-});
-
-// update the users information in the database
-app.get('/update', stormpath.loginRequired, function(req, res) {
-  // update/create the record with the id of the button just clicked
   MongoClient.connect(mongoURL, function(err, db) {
     assert.equal(null, err);
-  
-    updateUsers(db, function() {
-      updateBars(db, function() {
-        db.close();
-        res.redirect("/");
-      }, req.query.id, req.query.total);
-    }, req.user.email, req.query.id, req.query.go);
+    findUserBooks(db, function(books) {
+      db.close();
+      response.render('pages/myBooks', { user : request.user.email, books: books });
+    }, request.user.email);
   });
 });
-
-// query the yelp api and user information from the database
-app.get('/yelp', stormpath.getUser, function(request, response) {
-    yelp.search({ term: 'bar', location: request.query.loc })
-  .then(function (data) {
-    // get the record for the current user if they are logged in
-    if(request.user != undefined){
-      MongoClient.connect(mongoURL, function(err, db) {
-        assert.equal(null, err);
-        findUser(db, function(records) {
-          findBars(db, function(barRecords) {
-            db.close();
-            data['userChoices'] = records;
-            data['dbBars'] = barRecords;
-            response.json(data);
-          });
-        }, request.user.email);
-      });
-    }
-    else {
-        MongoClient.connect(mongoURL, function(err, db) {
-          findBars(db, function(barRecords) {
-            data['dbBars'] = barRecords;
-            response.json(data);
-          });
-        });
-    }
-  })
-  .catch(function (err) {
-    response.json(data);
-  });
-});
-
-
 
 // get all of the books in the database
 app.get('/getBooks', function(req, res){
@@ -166,6 +133,34 @@ var findBook = function(db, callback, bookid) {
   var obj_id = new ObjectId(bookid);
   var cursor = db.collection('Books').findOne({"_id":obj_id}, function(err, doc){
     callback(doc);
+  });
+};
+
+// query the database to pull all of the books for an user
+var findUserBooks = function(db, callback, username) {
+  var books = [];
+   var cursor = db.collection('Books').find( { "user": username } );
+   cursor.each(function(err, doc) {
+      assert.equal(err, null);
+      if (doc != null) {
+         books.push(doc);
+      } else {
+         callback(books);
+      }
+   });
+};
+
+// insert a book into the book database
+var insertDocument = function(db, callback, image, name, url, username) {
+  console.log(username);
+   db.collection('Books').insertOne( {
+     "user" : username,
+     "url" : url,
+     "name" : name,
+     "image" : image
+   }, function(err, result) {
+    assert.equal(err, null);
+    callback();
   });
 };
 

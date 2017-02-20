@@ -36,6 +36,9 @@
   var userInfoFirstName = <%- JSON.stringify(firstName) %>;
   var userInfoLastName = <%- JSON.stringify(lastName) %>;
   var userInfoCustomData = <%- JSON.stringify(custom) %>;
+  if(window.location.href == 'https://nodejs-fcc-scottwestover.c9users.io/myInfo?updated=true') {
+    window.alert("User settings updated successfully.");
+  }
   </script>
 </body>
 </html>
