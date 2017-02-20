@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<body>
+  <% include ../partials/nav.ejs %>
+  <br>
+
+  <!-- Begin Container -->
+<div class="container">
+  <h2>Update My Info</h2><br>
+  <form action="/updateInfo" method="POST">
+    First Name *:<br>
+    <input type="text" name="firstname" value="<%= firstName %>" required>
+    <br>
+    Last Name *:<br>
+    <input type="text" name="lastname" value="<%= lastName %>" required>
+    <br>
+    City *:<br>
+    <input type="text" name="city" value="<%= custom.city %>" required>
+    <br>
+    State *:<br>
+    <input type="text" name="state" value="<%= custom.state %>" required>
+    <br><br>
+    <span>Fields with a (*) are required to update your settings.</span>
+    <br><br>
+    <input type="submit" value="Submit">
+  </form>
+ </div>
+  <!-- /.container -->
+
+  <script>
+  var userInfoFirstName = <%- JSON.stringify(firstName) %>;
+  var userInfoLastName = <%- JSON.stringify(lastName) %>;
+  var userInfoCustomData = <%- JSON.stringify(custom) %>;
+  </script>
+</body>
+</html>

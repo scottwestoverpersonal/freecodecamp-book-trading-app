@@ -5,18 +5,19 @@ var ObjectId = require('mongodb').ObjectID;
 var stormpath = require('express-stormpath');
 var app = express();
 
-var mongoURL = 'Your Mongo URL';
+var mongoURL = 'mongodb://heroku_qd2czt15:uefp27oepvc3v5ct1rtltmp63v@ds013456.mlab.com:13456/heroku_qd2czt15';
 
 app.use(stormpath.init(app, {
   website: true,
     apiKey: {
-      id: '', 
-      secret: ''
+      id: '78VXWXWDRKO8EJ0OVYA3GHUK3', 
+      secret: '5ygJqmkiVZi3QSWQuTvbQt4DxB86FlupzbqWHtr89FM'
     },
  application: {
-   href: '',
+   href: 'https://api.stormpath.com/v1/applications/1alAxdEWIbqJRw3CVEychu',
  }
 }));
+app.use(require('body-parser').urlencoded({ extended: true }));
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -34,6 +35,37 @@ app.get('/', stormpath.getUser, function(request, response) {
 	else {
 		response.render('pages/index', { user : null });
 	}
+});
+
+// render the add book page
+app.get('/addBook', stormpath.getUser, function(request, response) {
+	response.render('pages/addBook', { user : request.user.email });
+});
+
+// render the settings page
+app.get('/myInfo', stormpath.loginRequired, function(request, response) {
+  request.user.getCustomData(function(err, data) {
+    response.render('pages/settings', { firstName : request.user.givenName, custom : data, lastName: request.user.surname });
+  });
+});
+
+app.post('/updateInfo', stormpath.loginRequired, function(request, response) {
+	request.user.getCustomData(function(err, data) {
+    data.city = request.body.city;
+    data.state = request.body.state;
+    // Calling data.save() will persist your changes.
+    data.save(function() {
+      request.user.givenName = request.body.firstname;
+      request.user.surname = request.body.lastname;
+      request.user.save();
+      response.redirect("/myInfo?updated=true");
+    });
+  });
+});
+
+// render the my books page
+app.get('/myBooks', stormpath.loginRequired, function(request, response) {
+	response.render('pages/myBooks', { user : request.user.email });
 });
 
 // update the users information in the database
@@ -96,7 +128,7 @@ app.get('/getBooks', function(req, res){
   });
 });
 
-// get all of the books in the database
+// get a single book in the database
 app.get('/getBook', function(req, res){
   var bookID = req.param('bookid');
   MongoClient.connect(mongoURL, function(err, db) {
@@ -107,8 +139,6 @@ app.get('/getBook', function(req, res){
     }, bookID);
   });
 });
-
-// get a single book in the database
 
 app.on('stormpath.ready', function() {
   app.listen(app.get('port'), function() {

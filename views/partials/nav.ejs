@@ -13,6 +13,9 @@
       <form action="/logout" method="post" id="my_form">
         <ul class="nav navbar-nav navbar-right">
           <% if (user != null) { %>
+            <li id="mypinsLink"><a href="/myBooks">My Books</a></li>
+            <li id="addLink"><a href="/addBook">Add Book</a></li>
+            <li id="infoLink"><a href="/myInfo">Settings</a></li>
             <li id="logoutLink">
               <a href="javascript:{}" onclick="document.getElementById('my_form').submit(); return false;">Sign Out</a>
             </li>
