@@ -11,6 +11,8 @@
 
   <!-- Begin Container -->
 <div class="container">
+    <h2>My Books</h2>
+    <div id="info"></div>
     <div class="grid" style="position: relative; height: 184px;">
       <div class="grid-sizer"></div>
     </div>
@@ -22,8 +24,11 @@
   for(var i = 0; i < userBooks.length; i++){
     var htmlCards = '<div class="grid-item"><div class="card">';
     htmlCards += '<div class="img-wrapper"><img src="'+userBooks[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
-    htmlCards += '</div></div>';
+    htmlCards += '<div class="caption text-center"><div class="pin-title"><a href="/deleteBook?id='+userBooks[i]._id+'">X</a></div></div></div></div>';
     $('.grid').append(htmlCards);
+  }
+  if(userBooks.length == 0){
+    $('#info').append("You have no books.")
   }
   setTimeout(function(){ 
   $('.grid').masonry({

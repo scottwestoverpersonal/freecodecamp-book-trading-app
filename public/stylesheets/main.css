@@ -15,8 +15,19 @@ body {
 /* 2 columns */
 .grid-item--width2 { width: 40%; padding: 5px;}
 
-.pin-title {background-color: #fff;}
-
+.pin-title {
+  background-color: transparent;
+  text-align: left !important;
+  position: absolute;
+  top: 0;
+  right: 10;
+  /* float: right; */
+  right: 30px;
+  color: red !important;
+}
+.pin-title a{
+  color: red !important;
+}
 .centerBlock {
                 display: table;
                 margin: 0 auto;

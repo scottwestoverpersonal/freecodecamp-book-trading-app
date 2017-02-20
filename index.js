@@ -5,16 +5,16 @@ var ObjectId = require('mongodb').ObjectID;
 var stormpath = require('express-stormpath');
 var app = express();
 
-var mongoURL = '';
+var mongoURL = 'mongodb://heroku_qd2czt15:uefp27oepvc3v5ct1rtltmp63v@ds013456.mlab.com:13456/heroku_qd2czt15';
 
 app.use(stormpath.init(app, {
   website: true,
     apiKey: {
-      id: '', 
-      secret: ''
+      id: '78VXWXWDRKO8EJ0OVYA3GHUK3', 
+      secret: '5ygJqmkiVZi3QSWQuTvbQt4DxB86FlupzbqWHtr89FM'
     },
  application: {
-   href: '',
+   href: 'https://api.stormpath.com/v1/applications/1alAxdEWIbqJRw3CVEychu',
  }
 }));
 app.use(require('body-parser').urlencoded({ extended: true }));
@@ -42,6 +42,32 @@ app.get('/addBook', stormpath.getUser, function(request, response) {
 	response.render('pages/addBook', { user : request.user.email });
 });
 
+// render the my trades page
+app.get('/myTrades', stormpath.loginRequired, function(request, response) {
+   response.render('pages/myTrades', { user : request.user.email });
+});
+
+app.post('/getMyTrades', function(request, response) {
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    findUserTrades(db, function(trades) {
+      db.close();
+      response.json({"trades":trades});
+    }, request.body.email);
+  });
+});
+
+app.post('/getRequestedTrades', function(request, response) {
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    findRequestedTrades(db, function(trades) {
+      db.close();
+      response.json({"trades":trades});
+    }, request.body.email);
+  });
+});
+
+// add book to database
 app.post('/addBook', function(request, response){
   MongoClient.connect(mongoURL, function(err, db) {
     assert.equal(null, err);
@@ -49,6 +75,30 @@ app.post('/addBook', function(request, response){
         db.close();
         response.json({"data":"Added book"});
     }, request.body.image, request.body.name, request.body.url, request.body.user );
+  });
+});
+
+// add trade to database
+app.post('/addTrade', function(request, response){
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    insertDocument2(db, function() {
+        db.close();
+        response.json({"data":"Added Trade"});
+    }, request.body.image, request.body.bookid, request.body.targetUser, request.body.user );
+  });
+});
+
+// update trade status
+app.get('/updateTrade', function(request, response){
+  var id = request.query.id;
+  var status = request.query.status;
+  MongoClient.connect(mongoURL, function(err, db) {
+    assert.equal(null, err);
+    updateStatus(db, function() {
+        db.close();
+        response.redirect("/myTrades");
+    }, id, status );
   });
 });
 
@@ -107,6 +157,30 @@ app.get('/getBook', function(req, res){
   });
 });
 
+// delete book
+app.get('/deleteBook', function(req, res){
+    var id = req.query.id;
+    MongoClient.connect(mongoURL, function(err, db) {
+      assert.equal(null, err);
+      deleteBooks(db, function() {
+          db.close();
+          res.redirect("/myBooks");
+      }, id);
+    });
+});
+
+// delete trade
+app.get('/deleteTrade', function(req, res){
+    var id = req.query.id;
+    MongoClient.connect(mongoURL, function(err, db) {
+      assert.equal(null, err);
+      deleteTrades(db, function() {
+          db.close();
+          res.redirect("/myTrades");
+      }, id);
+    });
+});
+
 app.on('stormpath.ready', function() {
   app.listen(app.get('port'), function() {
     console.log('Node app is running on port', app.get('port'));
@@ -139,15 +213,42 @@ var findBook = function(db, callback, bookid) {
 // query the database to pull all of the books for an user
 var findUserBooks = function(db, callback, username) {
   var books = [];
-   var cursor = db.collection('Books').find( { "user": username } );
-   cursor.each(function(err, doc) {
-      assert.equal(err, null);
-      if (doc != null) {
-         books.push(doc);
-      } else {
-         callback(books);
-      }
-   });
+  var cursor = db.collection('Books').find( { "user": username } );
+  cursor.each(function(err, doc) {
+    assert.equal(err, null);
+    if (doc != null) {
+       books.push(doc);
+    } else {
+       callback(books);
+    }
+  });
+};
+
+// query the database to pull trades for this username
+var findUserTrades = function(db, callback, username) {
+  var trades = [];
+  var cursor = db.collection('Trades').find( { "user": username } );
+  cursor.each(function(err, doc) {
+    assert.equal(err, null);
+    if (doc != null) {
+       trades.push(doc);
+    } else {
+       callback(trades);
+    }
+  });
+};
+
+var findRequestedTrades = function(db, callback, username) {
+  var trades = [];
+  var cursor = db.collection('Trades').find( { "targetUser": username } );
+  cursor.each(function(err, doc) {
+    assert.equal(err, null);
+    if (doc != null) {
+       trades.push(doc);
+    } else {
+       callback(trades);
+    }
+  });
 };
 
 // insert a book into the book database
@@ -162,6 +263,55 @@ var insertDocument = function(db, callback, image, name, url, username) {
     assert.equal(err, null);
     callback();
   });
+};
+
+// insert a trade into the trade database
+var insertDocument2 = function(db, callback, image, bookid, targetUser, username) {
+  console.log(username);
+   db.collection('Trades').insertOne( {
+     "user" : username,
+     "status" : "pending",
+     "book" : bookid,
+     "targetUser" : targetUser,
+     "image" : image
+   }, function(err, result) {
+    assert.equal(err, null);
+    callback();
+  });
+};
+
+// delete a book from the database
+var deleteBooks = function(db, callback, id) {
+   db.collection('Books').deleteMany(
+      {_id: new ObjectId(id)},
+      function(err, results) {
+         //console.log(results);
+         callback();
+      }
+   );
+};
+
+// delete a trade from the database
+var deleteTrades = function(db, callback, id) {
+   db.collection('Trades').deleteMany(
+      {_id: new ObjectId(id)},
+      function(err, results) {
+         //console.log(results);
+         callback();
+      }
+   );
+};
+
+// update the record
+var updateStatus = function(db, callback, id, status) {
+   db.collection('Trades').updateOne(
+      {_id: new ObjectId(id)},
+      {
+        $set: {"status" : status}
+      }, {upsert:true}, function(err, results) {
+      //console.log(results);
+      callback();
+   });
 };
 
 //  https://stark-basin-36303.herokuapp.com/

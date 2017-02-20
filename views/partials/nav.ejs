@@ -13,6 +13,7 @@
       <form action="/logout" method="post" id="my_form">
         <ul class="nav navbar-nav navbar-right">
           <% if (user != null) { %>
+            <li id="tradeLink"><a href="/myTrades">My Trades</a></li>
             <li id="mypinsLink"><a href="/myBooks">My Books</a></li>
             <li id="addLink"><a href="/addBook">Add Book</a></li>
             <li id="infoLink"><a href="/myInfo">Settings</a></li>

@@ -12,7 +12,7 @@
   <!-- Begin Container -->
   <div class="container">
     <h2>Add Books</h2>
-    <input type="text" placeholder="Search..." id="searchText" value="Star Wars"><button onclick="searchForBook()">Search</button>
+    <input type="text" placeholder="Search..." id="searchText"><button onclick="searchForBook()">Search</button>
     <br>
     <div id="content"></div>
     <div class="grid" style="position: relative; height: 184px;">
@@ -87,6 +87,8 @@
 	      },
 	      success: function(data) {
 	      	console.log(data);
+	      	var tempHTML = "<h2>Book Added...</h2>";
+          document.getElementById("content").innerHTML = tempHTML;
 	      }
 	    });
     }

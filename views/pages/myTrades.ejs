@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<body>
+  <% include ../partials/nav.ejs %>
+  <br>
+
+  <!-- Begin Container -->
+<div class="container">
+    <h2>My Trade Requests</h2>
+    <div id="info">Loading...</div>
+    <div class="grid" style="position: relative; height: 184px;" id="grid1">
+      <div class="grid-sizer"></div>
+    </div>
+    <h2>Requests From Others</h2>
+    <div id="info2">Loading...</div>
+    <div class="grid" style="position: relative; height: 184px;" id="grid2">
+      <div class="grid-sizer"></div>
+    </div>
+ </div>
+  <!-- /.container -->
+
+  <script>
+  var user = <%- JSON.stringify(user) %>;
+  $.ajax({
+    type: 'POST',
+    url: '/getMyTrades',
+    data: {email: user},
+    success: function(data) {
+        console.log(data);
+        if(data.trades.length == 0){
+            $('#info').html("You have no trades.");
+        }else{
+            $('#info').html("");
+            for(var i = 0; i < data.trades.length; i++){
+                var htmlCards = '<div class="grid-item"><div class="card">';
+                htmlCards += '<div class="img-wrapper"><img src="'+data.trades[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
+                htmlCards += '<div class="caption text-center"><div class="pin-title2" style="text-align: left;">'+data.trades[i].status+'</div></div></div></div>';
+                $('#grid1').append(htmlCards);
+            }
+        }
+        $.ajax({
+            type: 'POST',
+            url: '/getRequestedTrades',
+            data: {email: user},
+            success: function(data2) {
+                console.log(data2);
+                if(data2.trades.length == 0){
+                    $('#info2').html("You have no requested trades.");
+                }else{
+                    $('#info2').html("");
+                    for(var i = 0; i < data2.trades.length; i++){
+                        var htmlCards = '<div class="grid-item"><div class="card">';
+                        htmlCards += '<div class="img-wrapper"><img src="'+data2.trades[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
+                        if(data2.trades[i].status == "pending"){
+                            htmlCards += '<div class="caption text-center"><div class="pin-title"><a href="/updateTrade?id='+data2.trades[i]._id+'&status=rejected">X</a>&nbsp;&nbsp;<a href="/updateTrade?id='+data2.trades[i]._id+'&status=approved" style="color:green !important;">&#10004;</a></div></div></div></div>';
+                        }else{
+                            htmlCards += '<div class="caption text-center"><div class="pin-title2" style="text-align: left;">'+data2.trades[i].status+'</div></div></div></div>';
+                        }
+                        $('#grid2').append(htmlCards);
+                    }
+                    setTimeout(function(){ 
+                    $('.grid').masonry({
+                    // set itemSelector so .grid-sizer is not used in layout
+                    itemSelector: '.grid-item',
+                    // use element for option
+                    columnWidth: '.grid-sizer',
+                    percentPosition: true
+                    });
+                    }, 200);
+                }
+            }
+        });
+    }
+  });
+  function imgError(image) {
+    image.onerror = "";
+    image.src = "http://www.avsforum.com/photopost/data/2277869/9/9f/9f50538d_test.jpeg";
+    return true;
+  }
+  </script>
+</body>
+</html>

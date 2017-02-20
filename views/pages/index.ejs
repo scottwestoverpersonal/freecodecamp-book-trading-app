@@ -11,6 +11,10 @@
 
   <!-- Begin Container -->
 <div class="container">
+    <h2>Welcome to FCC-Book-Trading-Club</h2>
+    <p>If you register for an account, you can add books to your library and trade books with other members.<br>
+       Click on the &hearts; to request a trade.
+    </p>
     <div class="grid" style="position: relative; height: 184px;">
       <div class="grid-sizer"></div>
     </div>
@@ -18,15 +22,26 @@
   <!-- /.container -->
 
   <script>
+  var user = <%- JSON.stringify(user) %>;
+  var results = {};
   $.ajax({
     type: 'GET',
     url: '/getBooks',
     success: function(data) {
         console.log(data);
+        results = data;
         for(var i = 0; i < data.books.length; i++){
           var htmlCards = '<div class="grid-item"><div class="card">';
           htmlCards += '<div class="img-wrapper"><img src="'+data.books[i].image+'" class="img-responsive img-rounded" onerror="imgError(this);"></div>';
-          htmlCards += '</div></div>';
+          if(user != null){
+            if(user != data.books[i].user){
+              htmlCards += '<div class="caption text-center"><div class="pin-title" onclick="trade(\''+data.books[i]._id+'\')"><a>&hearts;</a></div></div></div></div>';
+            }else{
+              htmlCards += '<div class="caption text-center"><div class="pin-title"></div></div></div></div>';
+            }
+          }else{
+            htmlCards += '</div></div>';
+          }
           $('.grid').append(htmlCards);
         }
         setTimeout(function(){ 
@@ -45,6 +60,27 @@
         image.src = "http://www.avsforum.com/photopost/data/2277869/9/9f/9f50538d_test.jpeg";
         return true;
     }
+  function trade(data) {
+    for(var i = 0; i < results.books.length; i++){
+      if(results.books[i]._id == data){
+        $.ajax({
+          type: 'POST',
+          url: '/addTrade',
+          data: {
+            image: results.books[i].image,
+            bookid: results.books[i]._id,
+            targetUser: results.books[i].user,
+            user: user
+          },
+          success: function(data2) {
+            console.log(data2);
+            window.alert("Trade requested");
+          }
+        });
+        break;
+      }
+    }
+  }
   </script>
 </body>
 </html>
