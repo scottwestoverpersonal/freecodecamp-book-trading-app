@@ -1,3 +1,7 @@
+# Important - Please Read
+
+Due to the Stormpath User API being shutdown, this app no longer works. It needs to be updated to use other authentication methods.
+
 # freecodecamp-book-trading-app
 This is a node.js app that allows users to manager their books, view other user's books, and to request trades with the other users. The app uses stormpath for user management, and mongodb for the database.
 
